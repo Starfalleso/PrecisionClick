@@ -1,0 +1,11 @@
+[project]
+name = "autoclick"
+version = "0.2.0"
+description = "A modern AutoClicker with PyQt6 GUI"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "pyautogui>=0.9.54",
+    "keyboard>=0.13.5",
+    "PyQt6>=6.11.0",
+]
