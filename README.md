@@ -1,6 +1,7 @@
 # PrecisionClick (GUI)
 
 Um autoclicker avançado e moderno com interface gráfica (PyQt6), suporte a sequências de macros, hotkeys globais e retículos de alvo.
+Teststes
 
 ## Funcionalidades
 
