@@ -1,17 +1,35 @@
+import os
 import sys
+import ctypes
+
+# 1. Force DPI Awareness to "Per Monitor V2" before ANY other library imports.
+# This is the most proactive way to avoid conflicts between Qt and PyAutoGUI.
+try:
+    ctypes.windll.shcore.SetProcessDpiAwareness(2) # 2 = PROCESS_PER_MONITOR_DPI_AWARE
+except Exception:
+    try:
+        ctypes.windll.user32.SetProcessDPIAware() # Fallback for older Windows
+    except Exception:
+        pass
+
+# 2. Suppress the "Access is denied" warning and configure via qt.conf
+os.environ["QT_CONF_PATH"] = os.path.join(os.path.dirname(os.path.abspath(__file__)), "qt.conf")
+os.environ["QT_LOGGING_RULES"] = "qt.qpa.window=false"
+os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "1"
+os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
+
 import time
-import threading
 import pyautogui
 import keyboard
 import random
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
     QLabel, QDoubleSpinBox, QSpinBox, QPushButton, QCheckBox, QFrame,
-    QComboBox, QGroupBox, QGridLayout, QTableWidget, QTableWidgetItem,
+    QComboBox, QGridLayout, QTableWidget, QTableWidgetItem,
     QHeaderView, QAbstractItemView
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer, QPoint
-from PyQt6.QtGui import QFont, QIcon, QPainter, QColor
+from PyQt6.QtGui import QFont, QPainter, QColor
 
 # Disable pyautogui's default 0.1s delay to allow user-defined intervals
 pyautogui.PAUSE = 0
@@ -274,7 +292,6 @@ class AutoClickerGUI(QMainWindow):
             }
             QCheckBox::indicator:checked {
                 background-color: #89b4fa;
-                image: url(check.png); /* Note: if icon not found, will just be solid color */
             }
             QTableWidget {
                 background-color: #181825;
@@ -603,13 +620,14 @@ class AutoClickerGUI(QMainWindow):
 
     def capture_mouse_pos(self):
         if keyboard.is_pressed('p'):
-            pos = pyautogui.position()
+            # Use QCursor to get screen coordinates that are consistent with Qt's scaling
+            pos = self.cursor().pos()
             if self.mode_combo.currentIndex() == 0: # Simple Mode
                 if self.fixed_loc_checkbox.isChecked():
-                    self.x_spin.setValue(pos.x)
-                    self.y_spin.setValue(pos.y)
+                    self.x_spin.setValue(pos.x())
+                    self.y_spin.setValue(pos.y())
             else: # Sequence Mode
-                self.add_sequence_step(pos.x, pos.y)
+                self.add_sequence_step(pos.x(), pos.y())
                 time.sleep(0.2) # Debounce
             self.update_indicators()
 

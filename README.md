@@ -1,19 +1,25 @@
-# Autoclick Dinâmico (GUI)
+# PrecisionClick (GUI)
 
-Um autoclicker moderno com interface gráfica (PyQt6), hotkeys globais e suporte a limites de cliques.
+Um autoclicker avançado e moderno com interface gráfica (PyQt6), suporte a sequências de macros, hotkeys globais e retículos de alvo.
 
 ## Funcionalidades
 
-- **Interface Gráfica**: Configure tudo facilmente em uma janela intuitiva.
-- **Início/Pausa via Teclado**: Use `F6` para começar e `F7` para parar instantaneamente, mesmo fora da janela.
-- **Modos de Clique**: Escolha entre cliques infinitos ou uma quantidade específica.
-- **Intervalo Personalizável**: Defina o tempo de espera entre cada clique (mínimo de 1ms).
-- **Feedback em Tempo Real**: Visualize o status e o contador de cliques na interface.
-- **Modo Dark/Light**: Interface limpa baseada no estilo Fusion do Qt.
+- **Interface Gráfica Moderna**: Design limpo e intuitivo baseado no tema "Catppuccin-like" com estilo Fusion.
+- **Dois Modos de Operação**:
+    - **Simples**: Repete cliques em um intervalo definido, opcionalmente em uma coordenada fixa.
+    - **Sequência de Macros**: Crie uma lista de múltiplos pontos de clique com intervalos e botões diferentes para cada passo.
+- **Hotkeys Globais Customizáveis**:
+    - **Início/Pausa**: Configure qualquer tecla para iniciar (`[` por padrão) ou parar (`]` por padrão) a execução.
+    - **Captura Rápida**: Pressione `P` enquanto passa o mouse sobre um local para capturar as coordenadas automaticamente.
+- **Variância de Tempo**: Adicione um fator de aleatoriedade (+/- segundos) aos intervalos para simular comportamento humano e evitar detecção.
+- **Retículos de Alvo**: Visualize exatamente onde os cliques ocorrerão com indicadores visuais semi-transparentes na tela.
+- **Configurações de Clique**: Suporte para botões Esquerdo, Direito e do Meio.
+- **Limite de Cliques**: Escolha entre cliques infinitos ou pare após atingir uma meta específica.
+- **Feedback em Tempo Real**: Status da execução e contador de cliques visíveis na interface.
 
 ## Pré-requisitos
 
-Este projeto utiliza o [uv](https://github.com/astral-sh/uv) para gerenciamento de dependências e ambiente virtual.
+Este projeto utiliza o [uv](https://github.com/astral-sh/uv) para gerenciamento de dependências e ambiente virtual de alto desempenho.
 
 ## Instalação
 
@@ -23,18 +29,22 @@ uv sync
 
 ## Como Usar
 
-1. Execute o programa:
+1. **Execute o programa**:
    ```powershell
    uv run python autoclick.py
    ```
-2. Configure o intervalo e o limite de cliques na janela.
-3. Clique em **Start** ou pressione **F6** para começar a clicar.
-4. Clique em **Stop** ou pressione **F7** para pausar a qualquer momento.
-5. Feche a janela para encerrar o programa.
+2. **Configure o modo**: Escolha entre "Simple Repeating" ou "Macro Sequence".
+3. **Capture coordenadas**:
+    - No modo Simples: Marque "Fixed Coordinates" e pressione `P` sobre o alvo.
+    - No modo Sequência: Pressione `P` repetidamente sobre diferentes pontos para adicioná-los à lista.
+4. **Ajuste os intervalos**: Defina o tempo de espera e a variância desejada.
+5. **Controle**:
+    - Clique em **START EXECUTION** ou use a hotkey configurada (padrão `[`).
+    - Clique em **STOP EXECUTION** ou use a hotkey configurada (padrão `]`).
 
 ## Tecnologias Utilizadas
 
-- **PyQt6**: Para a interface gráfica moderna.
-- **PyAutoGUI**: Para simulação dos cliques do mouse.
-- **Keyboard**: Para detecção de teclas de atalho globais.
-- **UV**: Para gestão ágil de pacotes Python.
+- **PyQt6**: Interface gráfica robusta e responsiva.
+- **PyAutoGUI**: Simulação precisa de eventos de mouse.
+- **Keyboard**: Hook de teclado global para controle total.
+- **UV**: Gestão moderna de pacotes Python.
