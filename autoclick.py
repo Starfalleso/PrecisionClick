@@ -2,6 +2,15 @@ import os
 import sys
 import ctypes
 
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
 # 1. Force DPI Awareness to "Per Monitor V2" before ANY other library imports.
 # This is the most proactive way to avoid conflicts between Qt and PyAutoGUI.
 try:
@@ -13,7 +22,7 @@ except Exception:
         pass
 
 # 2. Suppress the "Access is denied" warning and configure via qt.conf
-os.environ["QT_CONF_PATH"] = os.path.join(os.path.dirname(os.path.abspath(__file__)), "qt.conf")
+os.environ["QT_CONF_PATH"] = resource_path("qt.conf")
 os.environ["QT_LOGGING_RULES"] = "qt.qpa.window=false"
 os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "1"
 os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
@@ -29,7 +38,13 @@ from PyQt6.QtWidgets import (
     QHeaderView, QAbstractItemView
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer, QPoint
-from PyQt6.QtGui import QFont, QPainter, QColor
+from PyQt6.QtGui import QFont, QPainter, QColor, QIcon
+
+# Set Windows App ID for Taskbar Icon consistency
+if sys.platform == "win32":
+    import ctypes
+    myappid = 'mycompany.myproduct.subproduct.version' # arbitrary string
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
 # Disable pyautogui's default 0.1s delay to allow user-defined intervals
 pyautogui.PAUSE = 0
@@ -163,6 +178,9 @@ class AutoClickerGUI(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("PrecisionClick")
+        icon_path = resource_path("icon.png")
+        if os.path.exists(icon_path):
+            self.setWindowIcon(QIcon(icon_path))
         self.setMinimumWidth(500)
         
         # State

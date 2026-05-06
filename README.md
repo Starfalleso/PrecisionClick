@@ -16,6 +16,7 @@ Um autoclicker avançado e moderno com interface gráfica (PyQt6), suporte a seq
 - **Configurações de Clique**: Suporte para botões Esquerdo, Direito e do Meio.
 - **Limite de Cliques**: Escolha entre cliques infinitos ou pare após atingir uma meta específica.
 - **Feedback em Tempo Real**: Status da execução e contador de cliques visíveis na interface.
+- **Ícone Customizado**: Design moderno integrado à barra de tarefas.
 
 ## Pré-requisitos
 
