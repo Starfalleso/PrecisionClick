@@ -187,6 +187,75 @@ class ClickWorker(QThread):
                 break
             time.sleep(0.005)
 
+class RecordingOverlay(QWidget):
+    stop_clicked = pyqtSignal()
+    
+    def __init__(self, parent=None):
+        super().__init__(parent, Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setFixedSize(220, 100)
+        
+        # Center top of screen
+        screen = QApplication.primaryScreen().geometry()
+        self.move((screen.width() - self.width()) // 2, 40)
+        
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(10, 10, 10, 10)
+        
+        container = QFrame()
+        container.setObjectName("OverlayContainer")
+        container.setStyleSheet("""
+            #OverlayContainer {
+                background-color: rgba(30, 30, 46, 0.9);
+                border: 2px solid #89b4fa;
+                border-radius: 12px;
+            }
+            QLabel {
+                color: #cdd6f4;
+                font-size: 13px;
+                font-weight: bold;
+            }
+            QPushButton {
+                background-color: #313244;
+                color: #f38ba8;
+                border: 1px solid #7c4456;
+                border-radius: 6px;
+                padding: 6px 12px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #4a2731;
+                border-color: #f38ba8;
+            }
+        """)
+        container_layout = QVBoxLayout(container)
+        container_layout.setContentsMargins(12, 8, 12, 8)
+        container_layout.setSpacing(6)
+        
+        self.status_label = QLabel("🎙️ Recording: 0 steps")
+        self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        container_layout.addWidget(self.status_label)
+        
+        self.stop_btn = QPushButton("Stop & Save (ESC)")
+        self.stop_btn.clicked.connect(self.stop_clicked.emit)
+        container_layout.addWidget(self.stop_btn)
+        
+        layout.addWidget(container)
+        self.drag_position = QPoint()
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.drag_position = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+            event.accept()
+
+    def mouseMoveEvent(self, event):
+        if event.buttons() == Qt.MouseButton.LeftButton:
+            self.move(event.globalPosition().toPoint() - self.drag_position)
+            event.accept()
+
+    def set_steps_count(self, count):
+        self.status_label.setText(f"🎙️ Recording: {count} steps")
+
 class AutoClickerGUI(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -756,7 +825,7 @@ class AutoClickerGUI(QMainWindow):
         self.remove_step_btn.clicked.connect(self.remove_sequence_step)
         
         self.clear_steps_btn = QPushButton("Clear All")
-        self.clear_steps_btn.clicked.connect(lambda: self.table.setRowCount(0))
+        self.clear_steps_btn.clicked.connect(self.clear_all_sequence_steps)
         
         row1_layout.addWidget(self.record_seq_btn)
         row1_layout.addWidget(self.add_step_btn)
@@ -1125,6 +1194,12 @@ class AutoClickerGUI(QMainWindow):
         self.last_mouse_state = False
         self.recording_active = True
         
+        # Spawn the floating recording status overlay
+        self.recording_overlay = RecordingOverlay()
+        self.recording_overlay.stop_clicked.connect(self.stop_interactive_recording_manually)
+        self.recording_overlay.set_steps_count(self.table.rowCount())
+        self.recording_overlay.show()
+        
         self.record_timer = QTimer(self)
         self.record_timer.timeout.connect(self.record_tick)
         self.record_timer.start(20) # Check state every 20ms
@@ -1132,21 +1207,42 @@ class AutoClickerGUI(QMainWindow):
     def record_tick(self):
         # Press ESC to stop
         if keyboard.is_pressed('esc'):
-            self.record_timer.stop()
-            self.recording_active = False
-            self.showNormal()
-            self.activateWindow()
-            self.raise_()
-            self.update_indicators()
+            self.stop_interactive_recording_manually()
             return
             
         # Check mouse press (LButton = 0x01)
         is_pressed = (ctypes.windll.user32.GetAsyncKeyState(0x01) & 0x8000) != 0
         if is_pressed and not self.last_mouse_state:
             pos = self.cursor().pos()
+            # Do not record click if it falls inside the overlay geometry
+            if hasattr(self, 'recording_overlay') and self.recording_overlay and self.recording_overlay.geometry().contains(pos):
+                self.last_mouse_state = is_pressed
+                return
+                
             self.add_sequence_step(pos.x(), pos.y())
+            if hasattr(self, 'recording_overlay') and self.recording_overlay:
+                self.recording_overlay.set_steps_count(self.table.rowCount())
             
         self.last_mouse_state = is_pressed
+
+    def stop_interactive_recording_manually(self):
+        if hasattr(self, 'record_timer') and self.record_timer.isActive():
+            self.record_timer.stop()
+            
+        if hasattr(self, 'recording_overlay') and self.recording_overlay:
+            self.recording_overlay.close()
+            self.recording_overlay = None
+            
+        self.recording_active = False
+        self.showNormal()
+        self.activateWindow()
+        self.raise_()
+        self.update_indicators()
+
+    def clear_all_sequence_steps(self):
+        self.table.setRowCount(0)
+        self.update_settings()
+        self.update_indicators()
 
     def closeEvent(self, event): 
         self.worker.stop()
